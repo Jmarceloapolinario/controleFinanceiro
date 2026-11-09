@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: controleFinanceiro
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:controle_financeiro}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:validate}
+    show-sql: ${DB_SHOW_SQL:true}
+    properties:
+      hibernate:
+        format_sql: ${DB_FORMAT_SQL:true}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  cache:
+    redis:
+      time-to-live: ${REDIS_TTL:60000}
+
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+
+jwt:
+  public:
+    key: ${JWT_PUBLIC_KEY:classpath:authz.pub}
+  private:
+    key: ${JWT_PRIVATE_KEY:classpath:authz.pem}
