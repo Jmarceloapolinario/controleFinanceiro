@@ -5,16 +5,6 @@ import com.jm.controleFinanceiro.controller.response.LoginResponse;
 import com.jm.controleFinanceiro.model.Users;
 import com.jm.controleFinanceiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-
-import com.nimbusds.jwt.JWTClaimsSet;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -23,7 +13,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 
 
@@ -53,6 +42,7 @@ public class AuthService {
                 .issuedAt(Instant.now())
                 .claim("id", savedUser.getId())
                 .claim("email", savedUser.getEmail())
+                .claim("scope", savedUser.getScopes())
                 .build();
 
         String token = jwtEncoder.encode(JwtEncoderParameters.from(jwt)).getTokenValue();

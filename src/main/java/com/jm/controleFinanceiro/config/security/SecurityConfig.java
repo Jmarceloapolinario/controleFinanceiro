@@ -63,12 +63,33 @@ public class SecurityConfig {
     public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
         return jwt -> {
 
-            JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
-            var authorities = authoritiesConverter.convert(jwt);
+            java.util.Collection<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>();
 
 
-            JwtAuthenticationToken authenticationToken = new JwtAuthenticationToken(jwt, authorities);
-            return authenticationToken;
+            Object scopesClaim = jwt.getClaim("scope");
+            if (scopesClaim == null) {
+                scopesClaim = jwt.getClaim("scp");
+            }
+
+            if (scopesClaim instanceof String) {
+                for (String scope : ((String) scopesClaim).split(" ")) {
+                    authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_" + scope));
+                }
+            } else if (scopesClaim instanceof java.util.Collection) {
+                for (Object scope : (java.util.Collection<?>) scopesClaim) {
+                    authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_" + scope.toString()));
+                }
+            }
+
+
+            Object authoritiesClaim = jwt.getClaim("authorities");
+            if (authoritiesClaim instanceof java.util.Collection) {
+                for (Object auth : (java.util.Collection<?>) authoritiesClaim) {
+                    authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(auth.toString()));
+                }
+            }
+
+            return new JwtAuthenticationToken(jwt, authorities);
         };
     }
 

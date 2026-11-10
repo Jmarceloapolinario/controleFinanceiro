@@ -3,9 +3,8 @@ package com.jm.controleFinanceiro.controller;
 import com.jm.controleFinanceiro.controller.request.UserRequest;
 import com.jm.controleFinanceiro.controller.response.UserResponse;
 import com.jm.controleFinanceiro.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +17,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse create(@RequestBody UserRequest userRequest){
+    public UserResponse create(@Valid @RequestBody UserRequest userRequest){
         return userService.create(userRequest);
     }
 
