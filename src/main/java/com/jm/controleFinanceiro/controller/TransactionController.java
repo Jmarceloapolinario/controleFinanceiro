@@ -3,6 +3,7 @@ package com.jm.controleFinanceiro.controller;
 import com.jm.controleFinanceiro.controller.request.TransactionRequest;
 import com.jm.controleFinanceiro.controller.response.TransactionResponse;
 import com.jm.controleFinanceiro.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +19,7 @@ public class TransactionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TransactionResponse create(@RequestBody TransactionRequest request){
+    public TransactionResponse create(@Valid @RequestBody TransactionRequest request){
         return transactionService.crateTransaction(request);
     }
 

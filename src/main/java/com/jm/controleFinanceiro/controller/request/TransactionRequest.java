@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Builder
 @Getter
@@ -21,6 +23,9 @@ public class TransactionRequest {
     private BigDecimal amount;
     @NotBlank
     private TransactionType type;
+
+    @NotBlank
+    private LocalDate transactionDate;
     @NotBlank
     private Long accountId;
     @NotBlank
