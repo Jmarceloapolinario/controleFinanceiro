@@ -2,6 +2,7 @@ package com.jm.controleFinanceiro.controller.request;
 
 import com.jm.controleFinanceiro.enums.TransactionType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Builder
@@ -13,6 +14,6 @@ public class CategoryRequest {
 
     @NotBlank
     private String name;
-    @NotBlank
+    @NotNull(message = "O tipo de transação é obrigatorio")
     private TransactionType type;
 }
