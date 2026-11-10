@@ -12,6 +12,5 @@ public interface AccountMapper {
 
     AccountResponse toAccountResponse(Account account);
 
-    @Mapping(target = "user.id", source = "userId")
     Account toAccount(AccountRequest accountRequest);
 }

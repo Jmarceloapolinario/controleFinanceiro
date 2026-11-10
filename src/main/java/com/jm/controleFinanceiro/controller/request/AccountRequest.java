@@ -18,7 +18,5 @@ public class AccountRequest {
     private String name;
     @NotNull
     private BigDecimal balance;
-    @NotNull
-    private Long userId;
 
 }

@@ -2,13 +2,13 @@ package com.jm.controleFinanceiro.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "accounts")
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -29,8 +29,12 @@ public class Account {
     @JoinColumn(name = "user_id",nullable = false)
     private Users user;
 
-    @Column(name = "created_id", updatable = false)
-    private LocalDateTime created = LocalDateTime.now();
+    @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
+    private LocalDateTime created;
+
+    @Version
+    private Long version;
 
 
 }
