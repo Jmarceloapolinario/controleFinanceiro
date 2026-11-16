@@ -34,7 +34,7 @@ public class Account {
     private LocalDateTime created;
 
     @Version
-    private Long version;
+    private Long version = 0L;
 
 
 }

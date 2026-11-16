@@ -62,37 +62,33 @@ public class SecurityConfig {
     @Bean
     public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
         return jwt -> {
-
             java.util.Collection<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>();
-
 
             Object scopesClaim = jwt.getClaim("scope");
             if (scopesClaim == null) {
                 scopesClaim = jwt.getClaim("scp");
             }
 
-            if (scopesClaim instanceof String) {
-                for (String scope : ((String) scopesClaim).split(" ")) {
-                    authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_" + scope));
-                }
-            } else if (scopesClaim instanceof java.util.Collection) {
-                for (Object scope : (java.util.Collection<?>) scopesClaim) {
-                    authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_" + scope.toString()));
+
+            if (scopesClaim instanceof java.util.Collection) {
+                for (Object item : (java.util.Collection<?>) scopesClaim) {
+                    if (item instanceof java.util.Map) {
+
+                        Object name = ((java.util.Map<?, ?>) item).get("name");
+                        if (name != null) {
+                            authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_" + name.toString()));
+                        }
+                    } else if (item != null) {
+                        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_" + item.toString()));
+                    }
                 }
             }
 
-
-            Object authoritiesClaim = jwt.getClaim("authorities");
-            if (authoritiesClaim instanceof java.util.Collection) {
-                for (Object auth : (java.util.Collection<?>) authoritiesClaim) {
-                    authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(auth.toString()));
-                }
-            }
+            System.out.println("===> AUTHORITIES EXTRAÍDAS DO TOKEN: " + authorities);
 
             return new JwtAuthenticationToken(jwt, authorities);
         };
     }
-
     @Bean
     public JwtEncoder jwtEncoder() {
         JWK jwk = new RSAKey.Builder(this.rsaPublicKey).privateKey(this.rsaPrivateKey).build();

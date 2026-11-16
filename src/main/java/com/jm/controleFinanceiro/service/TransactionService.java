@@ -1,7 +1,9 @@
 package com.jm.controleFinanceiro.service;
 
 import com.jm.controleFinanceiro.controller.request.TransactionRequest;
+import com.jm.controleFinanceiro.controller.response.PageResponse;
 import com.jm.controleFinanceiro.controller.response.TransactionResponse;
+import com.jm.controleFinanceiro.enums.TransactionType;
 import com.jm.controleFinanceiro.exceptions.ResourceNotFoundException;
 import com.jm.controleFinanceiro.mapper.TransactionMapper;
 import com.jm.controleFinanceiro.model.Account;
@@ -13,12 +15,15 @@ import com.jm.controleFinanceiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +35,11 @@ public class TransactionService {
     private  final AccountRepository accountRepository;
     private final UserRepository userRepository;
 
-    @CacheEvict(value = "transaction", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "transaction", allEntries = true),
+            @CacheEvict(value = "accounts", allEntries = true),
+            @CacheEvict(value = "account", allEntries = true)
+    })
     @Transactional
     public TransactionResponse crateTransaction(TransactionRequest request) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -41,23 +50,34 @@ public class TransactionService {
         request.setAccountId(account.getId());
         Transaction newTransaction = transactionMapper.toTransaction(request);
         newTransaction.setUser(user);
-        account.setBalance(account.getBalance().add(newTransaction.getAmount()));
+        if (newTransaction.getType() == TransactionType.EXPENSE || newTransaction.getType() == TransactionType.TRANSFER_OUT || newTransaction.getType() == TransactionType.INVESTMENT) {
+            if (account.getBalance().compareTo(newTransaction.getAmount()) < 0) {
+                throw new RuntimeException("Insufficient balance in the account");
+            }
+            account.setBalance(account.getBalance().subtract(newTransaction.getAmount()));
+        } else if (newTransaction.getType() == TransactionType.INCOME || newTransaction.getType() == TransactionType.TRANSFER_IN || newTransaction.getType() == TransactionType.REFUND) {
+            account.setBalance(account.getBalance().add(newTransaction.getAmount()));
+        }
         accountRepository.save(account);
         transactionRepository.save(newTransaction);
         return transactionMapper.toTransactionResponse(newTransaction);
     }
 
-    @Cacheable(value = "transaction")
-    public Page<TransactionResponse> findAll(Pageable pageable) {
+    @Cacheable(value = "transaction",
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #pageable.pageNumber")
+    public PageResponse<TransactionResponse> findAll(Pageable pageable) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = jwt.getClaim("id");
         Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
-        return transactionRepository.findAllByUser(user,pageable)
+        Page<TransactionResponse> transactionPage = transactionRepository.findAllByUser(user, pageable)
                 .map(transactionMapper::toTransactionResponse);
+
+        return new PageResponse<>(transactionPage);
     }
 
-    @Cacheable(value = "transaction", key = "#id")
+    @Cacheable(value = "transaction",
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #id")
     public TransactionResponse findById(Long id) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = jwt.getClaim("id");

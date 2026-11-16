@@ -1,6 +1,7 @@
 package com.jm.controleFinanceiro.controller.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -12,6 +13,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class DepositRequest {
 
-    @NotBlank
+    @NotNull(message = "Amount cannot be null")
     private BigDecimal amount;
 }

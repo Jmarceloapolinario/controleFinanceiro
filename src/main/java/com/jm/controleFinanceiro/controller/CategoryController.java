@@ -20,7 +20,7 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @PreAuthorize("hasAnyAuthority('SCOPE_admin:all')")
+    @PreAuthorize("hasAnyAuthority('SCOPE_Admin')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryResponse create(@Valid @RequestBody CategoryRequest request){

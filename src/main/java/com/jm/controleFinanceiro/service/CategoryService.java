@@ -2,6 +2,7 @@ package com.jm.controleFinanceiro.service;
 
 import com.jm.controleFinanceiro.controller.request.CategoryRequest;
 import com.jm.controleFinanceiro.controller.response.CategoryResponse;
+import com.jm.controleFinanceiro.controller.response.PageResponse;
 import com.jm.controleFinanceiro.exceptions.ResourceNotFoundException;
 import com.jm.controleFinanceiro.mapper.CategoryMapper;
 import com.jm.controleFinanceiro.model.Category;
@@ -30,13 +31,16 @@ public class CategoryService {
         return categoryMapper.categoryToCategoryResponse(newCategory);
     }
 
-    @Cacheable(value = "category")
-    public Page<CategoryResponse> findAllCategories(Pageable pageable) {
-        return categoryRepository.findAll(pageable)
+    @Cacheable(value = "category" , key = "#pageable.pageNumber")
+    public PageResponse<CategoryResponse> findAllCategories(Pageable pageable) {
+
+        Page<CategoryResponse> categoryPage = categoryRepository.findAll(pageable)
                 .map(categoryMapper::categoryToCategoryResponse);
+
+        return new PageResponse<>(categoryPage);
     }
 
-    @Cacheable(value = "category", key = "#id")
+    @Cacheable(value = "category", key = "#id + ':' + #pageable.pageNumber")
     public CategoryResponse findById(Long id) {
         Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         return categoryMapper.categoryToCategoryResponse(category);

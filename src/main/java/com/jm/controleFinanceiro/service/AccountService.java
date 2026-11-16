@@ -3,6 +3,7 @@ package com.jm.controleFinanceiro.service;
 import com.jm.controleFinanceiro.controller.request.AccountRequest;
 import com.jm.controleFinanceiro.controller.request.TransactionRequest;
 import com.jm.controleFinanceiro.controller.response.AccountResponse;
+import com.jm.controleFinanceiro.controller.response.PageResponse;
 import com.jm.controleFinanceiro.enums.TransactionType;
 import com.jm.controleFinanceiro.exceptions.ResourceNotFoundException;
 import com.jm.controleFinanceiro.mapper.AccountMapper;
@@ -15,6 +16,7 @@ import com.jm.controleFinanceiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,7 +39,11 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
 
-    @CacheEvict(value = "account", allEntries = true)
+
+    @Caching(evict = {
+            @CacheEvict(value = "accounts", allEntries = true),
+            @CacheEvict(value = "account", allEntries = true)
+    })
     @Transactional
     public AccountResponse createAccount(AccountRequest accountRequest) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -53,8 +59,10 @@ public class AccountService {
 
     }
 
-    @Cacheable(value = "account" , key = "#userId + ':' + #pageable")
-    public Page<AccountResponse> findAll(Pageable pageable) {
+    @Cacheable(value = "accounts",
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #pageable.pageNumber"
+    )
+    public PageResponse<AccountResponse> findAll(Pageable pageable) {
 
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -62,12 +70,15 @@ public class AccountService {
         Long userId = jwt.getClaim("id");
         Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
-
-        return accountRepository.findAllByUser(user,pageable)
+        Page<AccountResponse> accountResponses = accountRepository.findAllByUser(user, pageable)
                 .map(accountMapper::toAccountResponse);
+
+        return new PageResponse<>(accountResponses);
     }
 
-    @Cacheable(value = "account", key = "#id + ':' + #userId + ':' + #pageable")
+
+    @Cacheable(value = "account",
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #id")
     public AccountResponse findById(Long id) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -78,6 +89,12 @@ public class AccountService {
         return accountMapper.toAccountResponse(accountRepository.findByUserAndId(user, id).orElseThrow(() -> new ResourceNotFoundException("Account not found")));
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "transaction", allEntries = true),
+            @CacheEvict(value = "accounts", allEntries = true),
+            @CacheEvict(value = "account", allEntries = true)
+    })
+    @Transactional
     public AccountResponse deposit(Long id, BigDecimal amount) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -93,7 +110,7 @@ public class AccountService {
 
         Account newAccount = account.get();
 
-        newAccount.setBalance(newAccount.getBalance().add(amount));
+
 
         Category category = categoryRepository.findByName("Deposito").orElseThrow(() -> new RuntimeException("Category not found"));
 
