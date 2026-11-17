@@ -2,6 +2,7 @@ package com.jm.controleFinanceiro.model;
 
 import com.jm.controleFinanceiro.enums.TransactionType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -42,6 +43,7 @@ public class Transaction {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",nullable = false)
+    @NotNull
     private Users user;
 
 }

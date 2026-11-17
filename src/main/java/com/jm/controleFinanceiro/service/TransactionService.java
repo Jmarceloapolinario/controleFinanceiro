@@ -4,6 +4,7 @@ import com.jm.controleFinanceiro.controller.request.TransactionRequest;
 import com.jm.controleFinanceiro.controller.response.PageResponse;
 import com.jm.controleFinanceiro.controller.response.TransactionResponse;
 import com.jm.controleFinanceiro.enums.TransactionType;
+import com.jm.controleFinanceiro.exceptions.InsufficientBalanceException;
 import com.jm.controleFinanceiro.exceptions.ResourceNotFoundException;
 import com.jm.controleFinanceiro.mapper.TransactionMapper;
 import com.jm.controleFinanceiro.model.Account;
@@ -37,6 +38,7 @@ public class TransactionService {
 
     @Caching(evict = {
             @CacheEvict(value = "transaction", allEntries = true),
+            @CacheEvict(value = "transactions", allEntries = true),
             @CacheEvict(value = "accounts", allEntries = true),
             @CacheEvict(value = "account", allEntries = true)
     })
@@ -52,7 +54,7 @@ public class TransactionService {
         newTransaction.setUser(user);
         if (newTransaction.getType() == TransactionType.EXPENSE || newTransaction.getType() == TransactionType.TRANSFER_OUT || newTransaction.getType() == TransactionType.INVESTMENT) {
             if (account.getBalance().compareTo(newTransaction.getAmount()) < 0) {
-                throw new RuntimeException("Insufficient balance in the account");
+                throw new InsufficientBalanceException("Insufficient balance in the account");
             }
             account.setBalance(account.getBalance().subtract(newTransaction.getAmount()));
         } else if (newTransaction.getType() == TransactionType.INCOME || newTransaction.getType() == TransactionType.TRANSFER_IN || newTransaction.getType() == TransactionType.REFUND) {
@@ -63,8 +65,8 @@ public class TransactionService {
         return transactionMapper.toTransactionResponse(newTransaction);
     }
 
-    @Cacheable(value = "transaction",
-            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #pageable.pageNumber")
+    @Cacheable(value = "transactions",
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
     public PageResponse<TransactionResponse> findAll(Pageable pageable) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = jwt.getClaim("id");
