@@ -33,5 +33,9 @@ SELECT 'Investimentos', 'INCOME'
     WHERE NOT EXISTS (SELECT 1 FROM category WHERE name = 'Investimentos');
 
 INSERT INTO category (name, type)
+SELECT 'Deposito', 'INCOME'
+    WHERE NOT EXISTS (SELECT 1 FROM category WHERE name = 'Deposito');
+
+INSERT INTO category (name, type)
 SELECT 'Freelance', 'INCOME'
     WHERE NOT EXISTS (SELECT 1 FROM category WHERE name = 'Freelance');
