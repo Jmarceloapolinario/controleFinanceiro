@@ -1,6 +1,7 @@
 package com.jm.controleFinanceiro.config;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.jm.controleFinanceiro.exceptions.InsufficientBalanceException;
 import com.jm.controleFinanceiro.exceptions.ResourceAlreadyExistsException;
 import com.jm.controleFinanceiro.exceptions.ResourceNotFoundException;
 import lombok.Builder;
@@ -81,6 +82,15 @@ public class GlobalExceptionHandle {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientBalanceException(InsufficientBalanceException e) {
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .message(e.getMessage())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 
     @Getter
     @Setter
