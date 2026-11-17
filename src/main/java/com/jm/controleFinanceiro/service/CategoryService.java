@@ -31,7 +31,7 @@ public class CategoryService {
         return categoryMapper.categoryToCategoryResponse(newCategory);
     }
 
-    @Cacheable(value = "category" , key = "#pageable.pageNumber")
+    @Cacheable(value = "category" , key = "#pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
     public PageResponse<CategoryResponse> findAllCategories(Pageable pageable) {
 
         Page<CategoryResponse> categoryPage = categoryRepository.findAll(pageable)
@@ -40,7 +40,7 @@ public class CategoryService {
         return new PageResponse<>(categoryPage);
     }
 
-    @Cacheable(value = "category", key = "#id + ':' + #pageable.pageNumber")
+    @Cacheable(value = "category", key = "#id")
     public CategoryResponse findById(Long id) {
         Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         return categoryMapper.categoryToCategoryResponse(category);
