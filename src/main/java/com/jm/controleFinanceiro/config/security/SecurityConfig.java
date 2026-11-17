@@ -84,7 +84,6 @@ public class SecurityConfig {
                 }
             }
 
-            System.out.println("===> AUTHORITIES EXTRAÍDAS DO TOKEN: " + authorities);
 
             return new JwtAuthenticationToken(jwt, authorities);
         };
