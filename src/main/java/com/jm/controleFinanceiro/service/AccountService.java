@@ -60,7 +60,7 @@ public class AccountService {
     }
 
     @Cacheable(value = "accounts",
-            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #pageable.pageNumber"
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort"
     )
     public PageResponse<AccountResponse> findAll(Pageable pageable) {
 

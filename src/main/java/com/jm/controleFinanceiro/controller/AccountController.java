@@ -26,7 +26,7 @@ public class AccountController {
 
     @PostMapping("/deposit/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public AccountResponse deposit(@Valid @PathVariable Long id, @RequestBody DepositRequest request) {
+    public AccountResponse deposit( @PathVariable Long id, @Valid @RequestBody DepositRequest request) {
         return accountService.deposit(id,request.getAmount());
     }
 
