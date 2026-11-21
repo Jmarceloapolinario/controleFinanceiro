@@ -1,6 +1,7 @@
 package com.jm.controleFinanceiro.controller;
 
 import com.jm.controleFinanceiro.controller.request.AccountRequest;
+import com.jm.controleFinanceiro.controller.request.AccountUpdateRequest;
 import com.jm.controleFinanceiro.controller.request.DepositRequest;
 import com.jm.controleFinanceiro.controller.response.AccountResponse;
 import com.jm.controleFinanceiro.service.AccountService;
@@ -44,7 +45,7 @@ public class AccountController {
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public AccountResponse update(@PathVariable Long id, @Valid @RequestBody AccountRequest accountRequest) {
+    public AccountResponse update(@PathVariable Long id, @Valid @RequestBody AccountUpdateRequest accountRequest) {
         return accountService.updateAccount(id, accountRequest);
     }
 

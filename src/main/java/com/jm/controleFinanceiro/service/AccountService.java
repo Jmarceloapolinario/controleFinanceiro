@@ -1,6 +1,7 @@
 package com.jm.controleFinanceiro.service;
 
 import com.jm.controleFinanceiro.controller.request.AccountRequest;
+import com.jm.controleFinanceiro.controller.request.AccountUpdateRequest;
 import com.jm.controleFinanceiro.controller.request.TransactionRequest;
 import com.jm.controleFinanceiro.controller.response.AccountResponse;
 import com.jm.controleFinanceiro.controller.response.PageResponse;
@@ -138,7 +139,7 @@ public class AccountService {
             @CacheEvict(value = "accounts", allEntries = true),
             @CacheEvict(value = "account", allEntries = true)
     })
-    public AccountResponse updateAccount(Long id, AccountRequest accountRequest) {
+    public AccountResponse updateAccount(Long id, AccountUpdateRequest accountRequest) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = jwt.getClaim("id");
         Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
@@ -147,7 +148,6 @@ public class AccountService {
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
         account.setName(accountRequest.getName());
-        account.setBalance(accountRequest.getBalance());
 
         Account updatedAccount = accountRepository.save(account);
         return accountMapper.toAccountResponse(updatedAccount);

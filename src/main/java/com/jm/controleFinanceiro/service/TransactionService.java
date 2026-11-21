@@ -103,20 +103,24 @@ public class TransactionService {
         Transaction transaction = transactionMapper.toTransaction(request);
         Transaction newTransaction = transactionRepository.findByUserAndId(user, id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+        if(newTransaction.getAmount() != request.getAmount()){
+            Account account = accountRepository.findByUserAndId(user, newTransaction.getAccount().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+            BigDecimal difference = request.getAmount().subtract(newTransaction.getAmount());
+            if (newTransaction.getType() == TransactionType.EXPENSE || newTransaction.getType() == TransactionType.TRANSFER_OUT || newTransaction.getType() == TransactionType.INVESTMENT) {
+                if (account.getBalance().compareTo(difference) < 0) {
+                    throw new InsufficientBalanceException("Insufficient balance in the account");
+                }
+                account.setBalance(account.getBalance().subtract(difference));
+            } else if (newTransaction.getType() == TransactionType.INCOME || newTransaction.getType() == TransactionType.TRANSFER_IN || newTransaction.getType() == TransactionType.REFUND) {
+                account.setBalance(account.getBalance().add(difference));
+            }
+            accountRepository.save(account);
+
+        }
         newTransaction.setDescription(transaction.getDescription());
         newTransaction.setAmount(transaction.getAmount());
         newTransaction.setType(transaction.getType());
-        Account account = accountRepository.findByUserAndId(user, newTransaction.getAccount().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-        if (newTransaction.getType() == TransactionType.EXPENSE || newTransaction.getType() == TransactionType.TRANSFER_OUT || newTransaction.getType() == TransactionType.INVESTMENT) {
-            if (account.getBalance().compareTo(newTransaction.getAmount()) < 0) {
-                throw new InsufficientBalanceException("Insufficient balance in the account");
-            }
-            account.setBalance(account.getBalance().subtract(newTransaction.getAmount()));
-        } else if (newTransaction.getType() == TransactionType.INCOME || newTransaction.getType() == TransactionType.TRANSFER_IN || newTransaction.getType() == TransactionType.REFUND) {
-            account.setBalance(account.getBalance().add(newTransaction.getAmount()));
-        }
-        accountRepository.save(account);
         transactionRepository.save(newTransaction);
         return transactionMapper.toTransactionResponse(newTransaction);
 
@@ -134,6 +138,20 @@ public class TransactionService {
         Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         Transaction transaction = transactionRepository.findByUserAndId(user, id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+        if (transaction.getType() == TransactionType.EXPENSE || transaction.getType() == TransactionType.TRANSFER_OUT || transaction.getType() == TransactionType.INVESTMENT) {
+            Account account = accountRepository.findByUserAndId(user, transaction.getAccount().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+            account.setBalance(account.getBalance().add(transaction.getAmount()));
+            accountRepository.save(account);
+        } else if (transaction.getType() == TransactionType.INCOME || transaction.getType() == TransactionType.TRANSFER_IN || transaction.getType() == TransactionType.REFUND) {
+            Account account = accountRepository.findByUserAndId(user, transaction.getAccount().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+            if (account.getBalance().compareTo(transaction.getAmount()) < 0) {
+                throw new InsufficientBalanceException("Insufficient balance in the account");
+            }
+            account.setBalance(account.getBalance().subtract(transaction.getAmount()));
+            accountRepository.save(account);
+        }
         transactionRepository.delete(transaction);
     }
 
