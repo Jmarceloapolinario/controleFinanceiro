@@ -380,9 +380,7 @@ O endpoint de depósito registra a movimentação na categoria `Deposito`.
 - [ ] Documentação OpenAPI/Swagger
 - [ ] Pipeline de CI (GitHub Actions)
 
-## 📄 Licença
 
-Defina a licença do projeto (por exemplo MIT) e adicione um arquivo `LICENSE`.
 
 ---
 
