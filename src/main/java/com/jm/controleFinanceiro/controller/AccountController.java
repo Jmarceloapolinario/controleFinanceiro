@@ -41,4 +41,17 @@ public class AccountController {
     public AccountResponse findById(@PathVariable Long id) {
         return accountService.findById(id);
     }
+
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public AccountResponse update(@PathVariable Long id, @Valid @RequestBody AccountRequest accountRequest) {
+        return accountService.updateAccount(id, accountRequest);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public String delete(@PathVariable Long id) {
+        accountService.deleteAccount(id);
+        return  "Account deleted";
+    }
 }

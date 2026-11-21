@@ -133,4 +133,37 @@ public class AccountService {
 
     }
 
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "accounts", allEntries = true),
+            @CacheEvict(value = "account", allEntries = true)
+    })
+    public AccountResponse updateAccount(Long id, AccountRequest accountRequest) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = jwt.getClaim("id");
+        Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+
+        Account account = accountRepository.findByUserAndId(user, id)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+
+        account.setName(accountRequest.getName());
+        account.setBalance(accountRequest.getBalance());
+
+        Account updatedAccount = accountRepository.save(account);
+        return accountMapper.toAccountResponse(updatedAccount);
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "accounts", allEntries = true),
+            @CacheEvict(value = "account", allEntries = true)
+    })
+    public void deleteAccount(Long id) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = jwt.getClaim("id");
+        Account account = accountRepository.findByUserAndId(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")), id)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+        accountRepository.delete(account);
+
+        }
 }

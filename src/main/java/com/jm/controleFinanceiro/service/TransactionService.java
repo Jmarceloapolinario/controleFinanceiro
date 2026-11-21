@@ -89,4 +89,52 @@ public class TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found")));
     }
 
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "transaction", allEntries = true),
+            @CacheEvict(value = "transactions", allEntries = true),
+            @CacheEvict(value = "accounts", allEntries = true),
+            @CacheEvict(value = "account", allEntries = true)
+    })
+    public TransactionResponse updateTransaction(Long id, TransactionRequest request){
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = jwt.getClaim("id");
+        Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Transaction transaction = transactionMapper.toTransaction(request);
+        Transaction newTransaction = transactionRepository.findByUserAndId(user, id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+        newTransaction.setDescription(transaction.getDescription());
+        newTransaction.setAmount(transaction.getAmount());
+        newTransaction.setType(transaction.getType());
+        Account account = accountRepository.findByUserAndId(user, newTransaction.getAccount().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+        if (newTransaction.getType() == TransactionType.EXPENSE || newTransaction.getType() == TransactionType.TRANSFER_OUT || newTransaction.getType() == TransactionType.INVESTMENT) {
+            if (account.getBalance().compareTo(newTransaction.getAmount()) < 0) {
+                throw new InsufficientBalanceException("Insufficient balance in the account");
+            }
+            account.setBalance(account.getBalance().subtract(newTransaction.getAmount()));
+        } else if (newTransaction.getType() == TransactionType.INCOME || newTransaction.getType() == TransactionType.TRANSFER_IN || newTransaction.getType() == TransactionType.REFUND) {
+            account.setBalance(account.getBalance().add(newTransaction.getAmount()));
+        }
+        accountRepository.save(account);
+        transactionRepository.save(newTransaction);
+        return transactionMapper.toTransactionResponse(newTransaction);
+
+    }
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "transaction", allEntries = true),
+            @CacheEvict(value = "transactions", allEntries = true),
+            @CacheEvict(value = "accounts", allEntries = true),
+            @CacheEvict(value = "account", allEntries = true)
+    })
+    public void deleteTransaction(Long id){
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = jwt.getClaim("id");
+        Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Transaction transaction = transactionRepository.findByUserAndId(user, id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+        transactionRepository.delete(transaction);
+    }
+
 }
