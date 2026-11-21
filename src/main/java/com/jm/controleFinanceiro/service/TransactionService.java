@@ -89,6 +89,12 @@ public class TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found")));
     }
 
+    private BigDecimal signed(TransactionType type, BigDecimal amount) {
+        return switch (type) {
+            case INCOME, TRANSFER_IN, REFUND -> amount;
+            case EXPENSE, TRANSFER_OUT, INVESTMENT -> amount.negate();
+        };
+    }
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "transaction", allEntries = true),
@@ -103,21 +109,18 @@ public class TransactionService {
         Transaction transaction = transactionMapper.toTransaction(request);
         Transaction newTransaction = transactionRepository.findByUserAndId(user, id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
-        if(newTransaction.getAmount() != request.getAmount()){
-            Account account = accountRepository.findByUserAndId(user, newTransaction.getAccount().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-            BigDecimal difference = request.getAmount().subtract(newTransaction.getAmount());
-            if (newTransaction.getType() == TransactionType.EXPENSE || newTransaction.getType() == TransactionType.TRANSFER_OUT || newTransaction.getType() == TransactionType.INVESTMENT) {
-                if (account.getBalance().compareTo(difference) < 0) {
-                    throw new InsufficientBalanceException("Insufficient balance in the account");
-                }
-                account.setBalance(account.getBalance().subtract(difference));
-            } else if (newTransaction.getType() == TransactionType.INCOME || newTransaction.getType() == TransactionType.TRANSFER_IN || newTransaction.getType() == TransactionType.REFUND) {
-                account.setBalance(account.getBalance().add(difference));
-            }
-            accountRepository.save(account);
+        Account account = accountRepository.findByUserAndId(user, newTransaction.getAccount().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
+        BigDecimal newBalance = account.getBalance()
+                .subtract(signed(newTransaction.getType(), newTransaction.getAmount()))
+                .add(signed(request.getType(), request.getAmount()));
+
+        if (newBalance.signum() < 0) {
+            throw new InsufficientBalanceException("Insufficient balance in the account");
         }
+        account.setBalance(newBalance);
+        accountRepository.save(account);
         newTransaction.setDescription(transaction.getDescription());
         newTransaction.setAmount(transaction.getAmount());
         newTransaction.setType(transaction.getType());
