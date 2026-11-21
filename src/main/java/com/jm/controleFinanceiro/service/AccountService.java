@@ -155,6 +155,8 @@ public class AccountService {
 
     @Transactional
     @Caching(evict = {
+            @CacheEvict(value = "transaction", allEntries = true),
+            @CacheEvict(value = "transactions", allEntries = true),
             @CacheEvict(value = "accounts", allEntries = true),
             @CacheEvict(value = "account", allEntries = true)
     })
