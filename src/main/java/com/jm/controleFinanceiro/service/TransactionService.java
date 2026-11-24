@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +41,11 @@ public class TransactionService {
             @CacheEvict(value = "transaction", allEntries = true),
             @CacheEvict(value = "transactions", allEntries = true),
             @CacheEvict(value = "accounts", allEntries = true),
-            @CacheEvict(value = "account", allEntries = true)
+            @CacheEvict(value = "account", allEntries = true),
+            @CacheEvict(value = "transactionById", allEntries = true),
+            @CacheEvict(value = "transactionsByAccount", allEntries = true),
+            @CacheEvict(value = "transactionsByDate", allEntries = true),
+            @CacheEvict(value = "transactionsByCategoryId", allEntries = true)
     })
     @Transactional
     public TransactionResponse crateTransaction(TransactionRequest request) {
@@ -78,7 +83,7 @@ public class TransactionService {
         return new PageResponse<>(transactionPage);
     }
 
-    @Cacheable(value = "transaction",
+    @Cacheable(value = "transactionById",
             key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #id")
     public TransactionResponse findById(Long id) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -100,7 +105,11 @@ public class TransactionService {
             @CacheEvict(value = "transaction", allEntries = true),
             @CacheEvict(value = "transactions", allEntries = true),
             @CacheEvict(value = "accounts", allEntries = true),
-            @CacheEvict(value = "account", allEntries = true)
+            @CacheEvict(value = "account", allEntries = true),
+            @CacheEvict(value = "transactionById", allEntries = true),
+            @CacheEvict(value = "transactionsByAccount", allEntries = true),
+            @CacheEvict(value = "transactionsByDate", allEntries = true),
+            @CacheEvict(value = "transactionsByCategoryId", allEntries = true)
     })
     public TransactionResponse updateTransaction(Long id, TransactionRequest request){
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -132,6 +141,10 @@ public class TransactionService {
     @Caching(evict = {
             @CacheEvict(value = "transaction", allEntries = true),
             @CacheEvict(value = "transactions", allEntries = true),
+            @CacheEvict(value = "transactionById", allEntries = true),
+            @CacheEvict(value = "transactionsByAccount", allEntries = true),
+            @CacheEvict(value = "transactionsByDate", allEntries = true),
+            @CacheEvict(value = "transactionsByCategoryId", allEntries = true),
             @CacheEvict(value = "accounts", allEntries = true),
             @CacheEvict(value = "account", allEntries = true)
     })
@@ -156,6 +169,46 @@ public class TransactionService {
             accountRepository.save(account);
         }
         transactionRepository.delete(transaction);
+    }
+
+    @Cacheable(value = "transactionsByAccount",
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #accountId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
+    public PageResponse<TransactionResponse> findAllByAccountId(Long accountId, Pageable pageable) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = jwt.getClaim("id");
+        Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Account account = accountRepository.findByUserAndId(user, accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+
+        Page<TransactionResponse> transactionPage = transactionRepository.findAllByAccountIdAndUser(accountId, user, pageable)
+                .map(transactionMapper::toTransactionResponse);
+
+        return new PageResponse<>(transactionPage);
+    }
+    @Cacheable(value = "transactionsByDate",
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #date + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
+    public PageResponse<TransactionResponse> findAllByDate(LocalDate from, LocalDate to, Pageable pageable) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = jwt.getClaim("id");
+        Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+
+        Page<TransactionResponse> transactionPage = transactionRepository.findAllByTransactionDateBetweenAndUser(from, to, user, pageable)
+                .map(transactionMapper::toTransactionResponse);
+
+        return new PageResponse<>(transactionPage);
+    }
+
+    @Cacheable(value = "transactionsByCategoryId",
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().principal.getClaim('id') + ':' + #categoryId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
+    public PageResponse<TransactionResponse> findAllByCategoryId(Long categoryId, Pageable pageable) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = jwt.getClaim("id");
+        Users user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+
+        Page<TransactionResponse> transactionPage = transactionRepository.findAllByCategoryIdAndUser(categoryId, user , pageable)
+                .map(transactionMapper::toTransactionResponse);
+
+        return new PageResponse<>(transactionPage);
     }
 
 }

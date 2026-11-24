@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+
 @RestController
 @RequestMapping("/transaction")
 @RequiredArgsConstructor
@@ -41,10 +43,29 @@ public class TransactionController {
         return transactionService.updateTransaction(id ,request);
     }
 
+    @GetMapping("/account/{accountId}")
+    @ResponseStatus(HttpStatus.OK)
+    public Page<TransactionResponse> findAllByAccountId(@PathVariable Long accountId, Pageable pageable){
+        return transactionService.findAllByAccountId(accountId, pageable);
+    }
+
+    @GetMapping("/category/{categoryId}")
+    @ResponseStatus(HttpStatus.OK)
+    public Page<TransactionResponse> findAllByCategoryId(@PathVariable Long categoryId, Pageable pageable){
+        return transactionService.findAllByCategoryId(categoryId, pageable);
+    }
+
+    @GetMapping("/date-range")
+    @ResponseStatus(HttpStatus.OK)
+    public Page<TransactionResponse> findAllByDateRange(@RequestParam LocalDate from, @RequestParam LocalDate to, Pageable pageable){
+        return transactionService.findAllByDate(from, to, pageable);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public String delete(@PathVariable Long id) {
         transactionService.deleteTransaction(id);
         return "Transaction deleted successfully";
     }
+
 }

@@ -2,16 +2,15 @@ package com.jm.controleFinanceiro.controller.response;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.jm.controleFinanceiro.enums.TransactionType;
-import com.jm.controleFinanceiro.model.Account;
-import com.jm.controleFinanceiro.model.Category;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Setter
-@JsonPropertyOrder({ "id", "description", "amount", "type","account","category"})
+@JsonPropertyOrder({ "id", "description", "amount", "type","account","category", "transactionDate"})
 public class TransactionResponse {
 
     private Long id;
@@ -20,4 +19,5 @@ public class TransactionResponse {
     private TransactionType type;
     private Long accountId;
     private Long categoryId;
+    private LocalDate transactionDate;
 }
