@@ -41,10 +41,8 @@ public class AccountService {
     private final CategoryRepository categoryRepository;
 
 
-    @Caching(evict = {
-            @CacheEvict(value = "accounts", allEntries = true),
-            @CacheEvict(value = "account", allEntries = true)
-    })
+    @CacheEvict(cacheNames = {"transactions","transactionById", "transactionsByAccount",
+            "transactionsByDate", "transactionsByCategoryId", "accounts", "account"}, allEntries = true)
     @Transactional
     public AccountResponse createAccount(AccountRequest accountRequest) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -90,11 +88,8 @@ public class AccountService {
         return accountMapper.toAccountResponse(accountRepository.findByUserAndId(user, id).orElseThrow(() -> new ResourceNotFoundException("Account not found")));
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "transaction", allEntries = true),
-            @CacheEvict(value = "accounts", allEntries = true),
-            @CacheEvict(value = "account", allEntries = true)
-    })
+    @CacheEvict(cacheNames = {"transactions","transactionById", "transactionsByAccount",
+            "transactionsByDate", "transactionsByCategoryId", "accounts", "account"}, allEntries = true)
     @Transactional
     public AccountResponse deposit(Long id, BigDecimal amount) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -135,10 +130,8 @@ public class AccountService {
     }
 
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "accounts", allEntries = true),
-            @CacheEvict(value = "account", allEntries = true)
-    })
+    @CacheEvict(cacheNames = {"transactions","transactionById", "transactionsByAccount",
+            "transactionsByDate", "transactionsByCategoryId", "accounts", "account"}, allEntries = true)
     public AccountResponse updateAccount(Long id, AccountUpdateRequest accountRequest) {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = jwt.getClaim("id");

@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-@JsonPropertyOrder({ "id", "description", "amount", "type","account","category", "transactionDate"})
+@JsonPropertyOrder({ "id", "description", "amount", "type","accountId","categoryId", "transactionDate"})
 public class TransactionResponse {
 
     private Long id;
